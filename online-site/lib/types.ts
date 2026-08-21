@@ -68,6 +68,15 @@ export type EmailDraftRow = {
   updated_at: string;
 };
 
+export type LearningExampleRow = {
+  invoice_id: number;
+  source_filename: string;
+  template_signature: string;
+  fields_json: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ExtractedFields = Pick<InvoiceRow,
   "vessel_name" | "voyage_no" | "eta" | "invoice_no" | "invoice_date" |
   "owner_name" | "owner_email" | "port_of_discharge" | "container_no" |

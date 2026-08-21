@@ -14,6 +14,7 @@ export default async function EditInvoicePage({ params, searchParams }: { params
       {query.duplicate === "1" && <div className="notice">相同账单号已经存在，因此没有重复录入。</div>}
       {Number(query.uploaded || 0) > 0 && <div className="notice">已导入 {String(query.uploaded)} 份账单，请先核对这一份。</div>}
       {invoice.invoice_category === "last_free_day_extension" && <div className="notice warning"><strong>延长免租期账单 · 请重新审核</strong><br />请重点核对账单号、集装箱号、金额和费用明细；保存后会计入船东付款合计。</div>}
+      {invoice.learning_note && <div className="notice"><strong>已使用校正学习</strong><br />{invoice.learning_note}</div>}
       {invoice.extraction_warning && <div className="flash error">{invoice.extraction_warning}</div>}
       <div className="split">
         <form className="card" action={`/api/invoices/${invoice.id}`} method="post">

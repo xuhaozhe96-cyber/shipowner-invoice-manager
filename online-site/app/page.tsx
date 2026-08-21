@@ -34,7 +34,6 @@ export default async function Home() {
   const extensionNeeded = vessels.reduce((sum, vessel) => sum + vessel.extensionCount, 0);
   const missingEta = vessels.filter((vessel) => !vessel.eta).length;
   const pendingCoscoDrafts = vessels.reduce((sum, vessel) => sum + Math.max(0, vessel.coscoCount - vessel.coscoDrafts), 0);
-
   return (
     <main>
       <section className="hero">
@@ -113,7 +112,6 @@ function buildVessels(invoices: InvoiceRow[], drafts: EmailDraftRow[], plans: Fr
       ),
     ).length;
   }
-
   return Array.from(map.values()).sort((a, b) => (a.eta || "9999-99-99").localeCompare(b.eta || "9999-99-99") || a.vessel.localeCompare(b.vessel));
 }
 

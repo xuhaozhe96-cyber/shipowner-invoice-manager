@@ -1,8 +1,10 @@
 import { extractText, getDocumentProxy } from "unpdf";
-import { bindings, first, nowIso, run } from "../../../../lib/db";
+import { all, bindings, first, nowIso, run } from "../../../../lib/db";
 import { extractFields } from "../../../../lib/extract";
-import type { InvoiceRow } from "../../../../lib/types";
+import { applyLearnedCorrections } from "../../../../lib/learning";
+import type { InvoiceRow, LearningExampleRow } from "../../../../lib/types";
 import { normalizeInvoiceNo, safeFilename } from "../../../../lib/utils";
+import { validateExtractedFields } from "../../../../lib/validation";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
@@ -13,6 +15,7 @@ export async function POST(request: Request) {
 
   const created: number[] = [];
   const duplicates: number[] = [];
+  const learningExamples = await all<LearningExampleRow>("SELECT * FROM learning_examples ORDER BY updated_at DESC LIMIT 80");
   for (const file of files) {
     if (file.size > MAX_FILE_BYTES || (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf")) continue;
     const bytes = new Uint8Array(await file.arrayBuffer());
@@ -26,7 +29,13 @@ export async function POST(request: Request) {
     } catch {
       warning = "PDF 文字提取失败；原始文件已保留，请手工核对字段。";
     }
-    const fields = extractFields(rawText);
+    const learned = applyLearnedCorrections(rawText, extractFields(rawText), learningExamples);
+    const fields = learned.fields;
+    const validationWarnings = validateExtractedFields(fields);
+    const extractionWarning = [
+      warning,
+      validationWarnings.length ? `请重点核对：${validationWarnings.join("；")}。` : "",
+    ].filter(Boolean).join("\n");
     const invoiceKey = normalizeInvoiceNo(fields.invoice_no);
     if (invoiceKey) {
       const duplicate = await first<Pick<InvoiceRow, "id">>("SELECT id FROM invoices WHERE invoice_no_key = ?", [invoiceKey]);
@@ -41,12 +50,12 @@ export async function POST(request: Request) {
     try {
       const result = await run(
         `INSERT INTO invoices (
-          source_filename, file_key, raw_text, extraction_warning, invoice_category,
+          source_filename, file_key, raw_text, extraction_warning, learning_note, invoice_category,
           vessel_name, voyage_no, eta, invoice_no, invoice_no_key, invoice_date,
           owner_name, owner_email, port_of_discharge, container_no, container_size,
           bl_no, charge_details, amount, currency, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, 'freight', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待校正', ?, ?)`,
-        [safeFilename(file.name), fileKey, rawText, warning, fields.vessel_name, fields.voyage_no,
+        ) VALUES (?, ?, ?, ?, ?, 'freight', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待校正', ?, ?)`,
+        [safeFilename(file.name), fileKey, rawText, extractionWarning, learned.note, fields.vessel_name, fields.voyage_no,
           fields.eta, fields.invoice_no, invoiceKey, fields.invoice_date, fields.owner_name,
           fields.owner_email, fields.port_of_discharge, fields.container_no, fields.container_size,
           fields.bl_no, fields.charge_details, fields.amount, fields.currency, now, now],

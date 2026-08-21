@@ -10,6 +10,7 @@ data/**
 !data/uploads/
 !data/uploads/.gitkeep
 online-site/node_modules/
+.pnpm-store/
 online-site/.vinext/
 online-site/dist/
 *.log
