@@ -1,0 +1,16 @@
+.venv/
+.venv-mac/
+.gh-config/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+data/**
+!data/uploads/
+!data/uploads/.gitkeep
+online-site/node_modules/
+online-site/.vinext/
+online-site/dist/
+*.log
+*.zip

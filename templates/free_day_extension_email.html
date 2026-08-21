@@ -1,0 +1,8 @@
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#1f1f1f">
+  <p>Hi team,</p>
+  <p>Could you please also help extend the below container{% if containers|length > 1 %}s{% endif %} and forward us the invoice? Thank you.</p>
+  <div style="margin:18px 0">
+    {% for container in containers %}<div style="margin:7px 0"><strong>{{ container.container_no }}</strong> extend to <strong>{{ container.pickup_date_display }}</strong></div>{% endfor %}
+  </div>
+  <p>Thank you.</p>
+</div>

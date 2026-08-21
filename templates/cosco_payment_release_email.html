@@ -1,0 +1,22 @@
+<div class="release-email" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.45;">
+  <p style="margin:0 0 22px;">Good day COSCO team,</p>
+  <p style="margin:0 0 22px;">Could you please help allocate this payment and release to our badge <strong>{{ badge }}</strong>? Thank you.</p>
+  <p style="margin:0 0 4px;">Please find the payment details:</p>
+  <table style="border-collapse:collapse;min-width:1060px;margin:0 0 22px;">
+    <thead><tr>
+      {% for heading in ['Payment Date','Total payment value','Invoice Value','Invoice Number','Invoice Date','Vessel','ETA','BL Reference','Container'] %}<th style="border:1px solid #222;background:#fff2a8;padding:7px 8px;text-align:center;">{{ heading }}</th>{% endfor %}
+    </tr></thead>
+    <tbody>{% for row in rows %}<tr>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;white-space:nowrap;">{{ row.payment_date }}</td>
+      {% if loop.first %}<td rowspan="{{ rows|length }}" style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;text-align:center;white-space:nowrap;">{{ total_payment_value }}</td>{% endif %}
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;white-space:nowrap;">{{ row.invoice_value }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;">{{ row.invoice_no }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;white-space:nowrap;">{{ row.invoice_date }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;white-space:nowrap;">{{ row.vessel }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;white-space:nowrap;">{{ row.eta }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;">{{ row.bl_no }}</td>
+      <td style="border:1px solid #222;background:#f8c8ce;padding:4px 6px;">{{ row.container_no }}</td>
+    </tr>{% endfor %}</tbody>
+  </table>
+  <p style="margin:0;">Thank you.</p>
+</div>

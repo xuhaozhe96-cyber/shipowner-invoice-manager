@@ -1,0 +1,8 @@
+Hello COSCO team,
+
+Could you please help forward us the THC LOLO invoice for below containers? Thank you.
+
+Vessel | ETA | BL Reference | Container
+{% for container in containers %}{{ vessel }} | {{ eta }} | {{ container.bl_nos|join(', ') or '-' }} | {{ container.container_no }}
+{% endfor %}
+Thank you.

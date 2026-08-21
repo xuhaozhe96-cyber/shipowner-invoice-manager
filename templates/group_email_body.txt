@@ -1,0 +1,25 @@
+Dear {{ owner or 'Sir/Madam' }},
+
+Hope you are well.
+
+Please find below the invoice and container summary for the approaching vessel:
+
+Vessel: {{ vessel }}
+ETA: {{ eta or '[ETA to be confirmed]' }}
+
+{% for invoice in invoices %}Invoice {{ loop.index }}
+- Invoice No.: {{ invoice.invoice_no or '[Invoice No.]' }}
+- Container No.: {{ invoice.container_no or '[Container No.]' }}
+- Container Size: {{ invoice.container_size or '[Container Size]' }}
+- Port of Discharge: {{ invoice.port_of_discharge or '[Port of Discharge]' }}
+- B/L No.: {{ invoice.bl_no or '[B/L No.]' }}
+{% if invoice.charge_details %}- Charges:
+{% for line in invoice.charge_details.split('\n') %}  {{ line }}
+{% endfor %}{% endif %}- Invoice Total: {{ invoice.currency }} {{ invoice.amount }}
+
+{% endfor %}Summary Total:
+{% for total in totals %}- {{ total.currency }} {{ total.amount }}
+{% endfor %}
+Please check the above information and let us know if you have any questions.
+
+Best regards,

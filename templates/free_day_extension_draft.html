@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}延长 Last Free Day 邮件{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">LAST FREE DAY EXTENSION</p><h1>延长 Last Free Day 邮件</h1><p>船舶：{{ vessel }} · 船东：{{ owner }} · 收件人：{{ email or '待补充邮箱' }} · {{ containers|length }} 个集装箱</p></div>
+  <a href="{{ url_for('invoice_group', vessel=vessel) }}">返回船舶汇总</a>
+</div>
+<form class="card" method="post">
+  <div class="notice">这里只列出“计划提柜日期晚于 Last Free Day”的集装箱。程序保存草稿并提供格式化复制，不会自动发送邮件。</div>
+  <div class="subject-row">
+    <label><span>邮件主题</span><input id="email-subject" name="email_subject" value="{{ subject }}" required></label>
+    <button class="button secondary copy-button" type="button" onclick="copySubject(this)">复制主题</button>
+  </div>
+  <div class="section-heading email-preview-heading"><h2>格式化邮件预览</h2><button class="button" type="button" onclick="copyFormattedEmail(this)">复制格式化正文</button></div>
+  <div id="formatted-email-preview" class="formatted-email-preview">{{ formatted_html|safe }}</div>
+  <details class="plain-text-draft">
+    <summary>查看或修改纯文本备用版本</summary>
+    <label><span>纯文本正文</span><textarea name="email_body" rows="14" required>{{ body }}</textarea></label>
+  </details>
+  <div class="form-actions"><a href="{{ url_for('invoice_group', vessel=vessel) }}">取消</a><button class="button secondary" type="submit">保存延期邮件草稿</button></div>
+</form>
+<script>
+async function copySubject(button) {
+  await navigator.clipboard.writeText(document.getElementById('email-subject').value);
+  const oldText = button.textContent; button.textContent = '已复制';
+  setTimeout(() => button.textContent = oldText, 1400);
+}
+async function copyFormattedEmail(button) {
+  const preview = document.getElementById('formatted-email-preview');
+  const html = preview.innerHTML; const plain = preview.innerText;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([html], {type:'text/html'}),
+      'text/plain': new Blob([plain], {type:'text/plain'})
+    })]);
+  } catch (_error) { await navigator.clipboard.writeText(plain); }
+  const oldText = button.textContent; button.textContent = '已复制，可粘贴到 Outlook';
+  setTimeout(() => button.textContent = oldText, 1800);
+}
+</script>
+{% endblock %}

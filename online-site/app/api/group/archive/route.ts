@@ -1,0 +1,2 @@
+import { nowIso, run } from "../../../../lib/db";
+export async function POST(request: Request) { const form=await request.formData(); const vessel=String(form.get("vessel")||"").trim(); if(vessel) await run("INSERT INTO vessel_archives (vessel_name, archived_at) VALUES (?, ?) ON CONFLICT(vessel_name) DO UPDATE SET archived_at=excluded.archived_at",[vessel,nowIso()]); return Response.redirect(new URL("/",request.url),303); }

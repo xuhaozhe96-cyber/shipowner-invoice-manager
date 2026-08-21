@@ -1,0 +1,19 @@
+<div class="release-email" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.45;">
+  <p style="margin:0 0 22px;">Hello COSCO team,</p>
+  <p style="margin:0 0 22px;">Could you please help forward us the THC LOLO invoice for below containers? Thank you.</p>
+  <table style="border-collapse:collapse;min-width:680px;margin:0 0 22px;">
+    <thead><tr>
+      <th style="border:1px solid #222;background:#fff2a8;padding:7px 10px;text-align:center;">Vessel</th>
+      <th style="border:1px solid #222;background:#fff2a8;padding:7px 10px;text-align:center;">ETA</th>
+      <th style="border:1px solid #222;background:#fff2a8;padding:7px 10px;text-align:center;">BL Reference</th>
+      <th style="border:1px solid #222;background:#fff2a8;padding:7px 10px;text-align:center;">Container</th>
+    </tr></thead>
+    <tbody>{% for container in containers %}<tr>
+      <td style="border:1px solid #222;padding:4px 7px;">{{ vessel }}</td>
+      <td style="border:1px solid #222;padding:4px 7px;white-space:nowrap;">{{ eta }}</td>
+      <td style="border:1px solid #222;padding:4px 7px;">{{ container.bl_nos|join(', ') or '-' }}</td>
+      <td style="border:1px solid #222;padding:4px 7px;">{{ container.container_no }}</td>
+    </tr>{% endfor %}</tbody>
+  </table>
+  <p style="margin:0;">Thank you.</p>
+</div>

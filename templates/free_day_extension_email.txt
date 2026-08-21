@@ -1,0 +1,7 @@
+Hi team,
+
+Could you please also help extend the below container{% if containers|length > 1 %}s{% endif %} and forward us the invoice? Thank you.
+
+{% for container in containers %}{{ container.container_no }} extend to {{ container.pickup_date_display }}
+{% endfor %}
+Thank you.

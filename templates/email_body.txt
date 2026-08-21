@@ -1,0 +1,23 @@
+Dear {{ invoice.owner_name or 'Sir/Madam' }},
+
+Hope you are well.
+
+Please kindly provide the required documents for the following shipment before the vessel arrival:
+
+Vessel: {{ invoice.vessel_name or '[Vessel Name]' }}
+Voyage: {{ invoice.voyage_no or '[Voyage No.]' }}
+ETA: {{ invoice.eta or '[ETA]' }}
+Port of Discharge: {{ invoice.port_of_discharge or '[Port of Discharge]' }}
+Container No.: {{ invoice.container_no or '[Container No.]' }}
+Container Size: {{ invoice.container_size or '[Container Size]' }}
+B/L No.: {{ invoice.bl_no or '[B/L No.]' }}
+Invoice No.: {{ invoice.invoice_no or '[Invoice No.]' }}
+{% if invoice.charge_details %}
+Charge Details:
+{{ invoice.charge_details }}
+Total: {{ invoice.currency }} {{ invoice.amount }}
+{% endif %}
+
+Please let us know if you have any questions.
+
+Best regards,

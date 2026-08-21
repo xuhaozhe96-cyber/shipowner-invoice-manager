@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}上传账单{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">STEP 1</p><h1>上传船东账单</h1><p>可一次选择多份 PDF，每份账单会建立一条独立记录。</p></div></div>
+<form class="card upload-box" method="post" enctype="multipart/form-data">
+  <label class="file-picker"><span class="file-icon">PDF</span><strong>选择或拖入 PDF 文件</strong><small>支持文本型 PDF，单次最多 20 MB；扫描件需要手工录入。</small><input type="file" name="pdfs" accept="application/pdf,.pdf" multiple required></label>
+  <div class="form-actions"><a href="{{ url_for('dashboard') }}">取消</a><button class="button" type="submit">上传并识别</button></div>
+</form>
+{% endblock %}

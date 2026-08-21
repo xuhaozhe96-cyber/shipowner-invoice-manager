@@ -1,0 +1,3 @@
+import { bindings, first } from "../../../../lib/db";
+import type { PaymentProofRow } from "../../../../lib/types";
+export async function GET(_request:Request,context:{params:Promise<{id:string}>}){const {id}=await context.params;const row=await first<PaymentProofRow>("SELECT * FROM payment_proofs WHERE id=?",[Number(id)]);if(!row)return new Response("Not found",{status:404});const object=await bindings().FILES.get(row.file_key);if(!object)return new Response("Not found",{status:404});return new Response(object.body,{headers:{"content-type":row.content_type,"cache-control":"private, max-age=3600"}});}

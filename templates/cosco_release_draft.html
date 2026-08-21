@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}COSCO 付款后 Release 邮件{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">COSCO PAYMENT RELEASE</p><h1>付款后向 COSCO 要 Release</h1><p>船舶：{{ vessel }} · 收件人：{{ email }} · {% if proofs %}付款截图：已保存 {{ proofs|length }} 张{% else %}付款截图：未上传（可选）{% endif %}</p></div>
+  <a href="{{ url_for('invoice_group', vessel=vessel) }}">返回船舶汇总</a>
+</div>
+<form class="card" method="post">
+  <div class="notice">付款截图为可选凭证，不影响生成 Release 邮件。模板从“Good day COSCO team”开始，不包含外部邮件安全警告文字。</div>
+  <div class="subject-row">
+    <label><span>邮件主题</span><input id="email-subject" name="email_subject" value="{{ subject }}" required></label>
+    <button class="button secondary copy-button" type="button" onclick="copySubject(this)">复制主题</button>
+  </div>
+  <div class="section-heading email-preview-heading"><h2>格式化 Release 邮件预览</h2><button class="button" type="button" onclick="copyFormattedEmail(this)">复制格式化正文</button></div>
+  <div id="formatted-email-preview" class="formatted-email-preview wide-email-preview">{{ formatted_html|safe }}</div>
+  <details class="plain-text-draft">
+    <summary>查看或修改纯文本备用版本</summary>
+    <label><span>纯文本正文</span><textarea name="email_body" rows="18" required>{{ body }}</textarea></label>
+  </details>
+  <div class="form-actions"><a href="{{ url_for('invoice_group', vessel=vessel) }}">取消</a><button class="button secondary" type="submit">保存付款后 Release 草稿</button></div>
+</form>
+<script>
+async function copySubject(button) {
+  await navigator.clipboard.writeText(document.getElementById('email-subject').value);
+  const oldText = button.textContent; button.textContent = '已复制';
+  setTimeout(() => button.textContent = oldText, 1400);
+}
+async function copyFormattedEmail(button) {
+  const preview = document.getElementById('formatted-email-preview');
+  const html = preview.innerHTML; const plain = preview.innerText;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([html], {type:'text/html'}),
+      'text/plain': new Blob([plain], {type:'text/plain'})
+    })]);
+  } catch (_error) { await navigator.clipboard.writeText(plain); }
+  const oldText = button.textContent; button.textContent = '已复制，可粘贴到 Outlook';
+  setTimeout(() => button.textContent = oldText, 1800);
+}
+</script>
+{% endblock %}

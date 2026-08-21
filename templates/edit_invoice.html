@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}核对 {{ invoice.source_filename }}{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">STEP 2</p><h1>核对识别结果</h1><p>{{ invoice.source_filename }} · 所有字段均可修改 · 保存后会学习相似账单版式</p></div><a class="button secondary" target="_blank" href="{{ url_for('invoice_file', invoice_id=invoice.id) }}">查看原始 PDF</a></div>
+{% if invoice.extraction_warning %}<div class="flash error">{{ invoice.extraction_warning }}</div>{% endif %}
+{% if invoice.invoice_category == 'last_free_day_extension' %}<div class="notice extension-review-notice"><strong>延长免租期账单 · 请重新审核</strong><br>请重点核对账单号、集装箱号、金额和费用明细。保存并进入船舶汇总后，这份账单会自动计入该船东的付款合计。</div>{% endif %}
+{% if invoice.learning_note %}<div class="notice learning-notice"><strong>校正记忆已参与本次识别</strong><br>{{ invoice.learning_note }}</div>{% endif %}
+<div class="split">
+<form class="card" method="post">
+  <div class="form-grid">
+    <label><span>船名 Vessel</span><input name="vessel_name" value="{{ invoice.vessel_name }}"></label>
+    <label><span>航次 Voyage</span><input name="voyage_no" value="{{ invoice.voyage_no }}"></label>
+    <label><span>预计到港 ETA</span><input type="date" name="eta" value="{{ invoice.eta }}"></label>
+    <label><span>账单号 Invoice No.</span><input name="invoice_no" value="{{ invoice.invoice_no }}"></label>
+    <label><span>账单日期 Invoice Date</span><input type="date" name="invoice_date" value="{{ invoice.invoice_date }}"></label>
+    <label><span>船东 Owner / Carrier</span><input name="owner_name" value="{{ invoice.owner_name }}"></label>
+    <label><span>船东邮箱</span><input type="email" name="owner_email" value="{{ invoice.owner_email }}"></label>
+    <label><span>卸货港 Port of Discharge</span><input name="port_of_discharge" value="{{ invoice.port_of_discharge }}"></label>
+    <label><span>集装箱尺寸</span><input name="container_size" value="{{ invoice.container_size }}" placeholder="40HQ"></label>
+    <label class="full"><span>集装箱号（多个可用逗号分隔）</span><input name="container_no" value="{{ invoice.container_no }}"></label>
+    <label><span>提单号 B/L No.</span><input name="bl_no" value="{{ invoice.bl_no }}"></label>
+    <label><span>账单状态</span><select name="status">{% for value in ['待校正','已核对','已归档','已完成'] %}<option {% if invoice.status == value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+    <label><span>金额</span><input name="amount" value="{{ invoice.amount }}"></label>
+    <label><span>币种</span><input name="currency" value="{{ invoice.currency }}" placeholder="USD"></label>
+    <label class="full"><span>费用明细（每项一行）</span><textarea name="charge_details" rows="7" placeholder="Carrier Security Charge | £1.5">{{ invoice.charge_details }}</textarea></label>
+  </div>
+  <div class="form-actions"><button class="button secondary" name="next" value="save">保存账单</button><button class="button" name="next" value="group">保存并进入船舶汇总</button></div>
+</form>
+<aside class="card raw-text"><div class="section-heading"><h2>PDF 提取文本</h2></div><pre>{{ invoice.raw_text or '没有可显示的文本。请参考原始 PDF 手工填写。' }}</pre></aside>
+</div>
+{% endblock %}

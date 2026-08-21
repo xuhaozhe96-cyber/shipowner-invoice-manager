@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}当前船舶 · Shipowner Invoice Manager{% endblock %}
+{% block content %}
+<section class="hero">
+  <div><p class="eyebrow">CURRENT VESSELS</p><h1>当前船舶账单汇总</h1><p>按 ETA 从早到晚排列。点击船名即可打开该船的全部账单汇总。</p></div>
+  <div class="actions"><a class="button" href="{{ url_for('upload') }}">＋ 继续录入账单</a><a class="button secondary" href="{{ url_for('export_excel') }}">导出全部 Excel</a></div>
+</section>
+
+<section class="card">
+  <div class="section-heading"><h2>当前船舶</h2><span>{{ groups|length }} 条船</span></div>
+  {% if groups %}
+  <div class="table-wrap"><table class="vessel-table">
+    <thead><tr><th>ETA</th><th>船舶 / 航次</th><th>船东</th><th>集装箱号（按船东）</th><th>账单</th><th>COSCO 索账邮件</th><th>到港状态</th><th></th></tr></thead>
+    <tbody>{% for group in groups %}<tr>
+      <td class="nowrap"><strong>{{ group.eta or '待设置' }}</strong></td>
+      <td><a class="vessel-link" href="{{ url_for('invoice_group', vessel=group.vessel_name) }}">{{ group.vessel_name or '待补充船名' }}</a></td>
+      <td>{{ group.owner_count }}</td>
+      <td class="container-summary">{% for owner_group in group.container_groups %}<div><strong>{{ owner_group.owner_name }}：</strong>{{ owner_group.containers|join(', ') }}</div>{% else %}—{% endfor %}</td>
+      <td>{{ group.invoice_count }}</td>
+      <td>{% if group.request_owner_count %}{{ group.draft_count }}/{{ group.request_owner_count }}{% else %}<span class="muted">无需索要</span>{% endif %}</td>
+      <td>
+        {% if group.days_to_eta is none %}<span class="badge">未设置 ETA</span>
+        {% elif group.days_to_eta < 0 %}<span class="badge danger">已到港 {{ -group.days_to_eta }} 天</span>
+        {% elif group.days_to_eta <= 3 %}<span class="badge warning">{{ group.days_to_eta }} 天后到港</span>
+        {% else %}<span class="badge">{{ group.days_to_eta }} 天后到港</span>{% endif %}
+      </td>
+      <td class="nowrap row-actions">
+        <a href="{{ url_for('export_excel', vessel=group.vessel_name) }}">Excel</a>
+        <form class="inline-form" method="post" action="{{ url_for('archive_group') }}"><input type="hidden" name="vessel" value="{{ group.vessel_name }}"><button class="finish-button" type="submit">结束</button></form>
+      </td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty"><h3>当前没有船舶</h3><p>新录入的账单会出现在这里；已经结束的船舶可在历史记录中找到。</p><div class="actions centered"><a class="button" href="{{ url_for('upload') }}">上传账单</a><a class="button secondary" href="{{ url_for('history') }}">查看历史记录</a></div></div>{% endif %}
+</section>
+{% endblock %}

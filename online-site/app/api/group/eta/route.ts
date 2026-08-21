@@ -1,0 +1,2 @@
+import { nowIso, run } from "../../../../lib/db";
+export async function POST(request: Request) { const form=await request.formData(); const vessel=String(form.get("vessel")||"").trim(); const eta=String(form.get("eta")||"").trim(); if(vessel) await run("UPDATE invoices SET eta=?, updated_at=? WHERE vessel_name=?",[eta,nowIso(),vessel]); return Response.redirect(new URL(`/group?vessel=${encodeURIComponent(vessel)}&saved=eta`,request.url),303); }

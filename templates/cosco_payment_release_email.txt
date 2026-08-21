@@ -1,0 +1,10 @@
+Good day COSCO team,
+
+Could you please help allocate this payment and release to our badge {{ badge }}? Thank you.
+
+Please find the payment details:
+
+Payment Date | Total payment value | Invoice Value | Invoice Number | Invoice Date | Vessel | ETA | BL Reference | Container
+{% for row in rows %}{{ row.payment_date }} | {% if loop.first %}{{ total_payment_value }}{% endif %} | {{ row.invoice_value }} | {{ row.invoice_no }} | {{ row.invoice_date }} | {{ row.vessel }} | {{ row.eta }} | {{ row.bl_no }} | {{ row.container_no }}
+{% endfor %}
+Thank you.

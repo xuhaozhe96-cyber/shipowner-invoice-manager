@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ vessel }} · 船舶汇总{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">STEP 3 · VESSEL SUMMARY</p><h1>{{ vessel or '待补充船名' }}</h1><p>{{ invoices|length }} 份账单 · {{ owner_groups|length }} 个船东</p></div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('export_excel', vessel=vessel) }}">导出本船 Excel</a>
+    {% if archived %}
+    <form class="inline-form" method="post" action="{{ url_for('restore_group') }}"><input type="hidden" name="vessel" value="{{ vessel }}"><button class="button" type="submit">恢复到当前船舶</button></form>
+    <a href="{{ url_for('history') }}">返回历史记录</a>
+    {% else %}
+    <form class="inline-form" method="post" action="{{ url_for('archive_group') }}"><input type="hidden" name="vessel" value="{{ vessel }}"><button class="finish-button large" type="submit">结束本船</button></form>
+    <a href="{{ url_for('dashboard') }}">返回当前船舶</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if archived %}<div class="notice history-notice">此船舶已在历史记录中。点击“恢复到当前船舶”即可重新进入当前列表。</div>{% endif %}
+
+<section class="card summary-bar">
+  <form class="eta-form" method="post" action="{{ url_for('update_group_eta') }}">
+    <input type="hidden" name="vessel" value="{{ vessel }}">
+    <label><span>本船统一 ETA</span><input type="date" name="eta" value="{{ eta }}"></label>
+    <button class="button secondary" type="submit">更新 ETA</button>
+  </form>
+  <div><span class="muted">整船账单合计</span>{% for total in grand_totals %}<strong class="grand-total">{{ total.currency }} {{ total.amount }}</strong>{% else %}<strong class="grand-total">—</strong>{% endfor %}</div>
+</section>
+
+<section class="section-heading outside"><div><p class="eyebrow">OWNER SUMMARY</p><h2>按船东汇总</h2></div><span>只有 COSCO 多一个“索要账单”邮件步骤，其他船东只做汇总</span></section>
+<div class="owner-grid">
+{% for owner in owner_groups %}
+  <details class="card owner-card">
+    <summary class="owner-summary-toggle">
+      <span class="owner-summary-main">
+        <strong>{{ owner.owner_name or '待补充船东' }}</strong>
+        <small>{{ owner.owner_email or '待补充邮箱' }} · {{ owner.containers|length }} 个集装箱 · {{ owner.invoices|length }} 份账单 · {% for total in owner.totals %}{{ total.currency }} {{ total.amount }}{% if not loop.last %} / {% endif %}{% else %}暂无金额{% endfor %} <span class="owner-release-summary">· Release {{ owner.released_count }}/{{ owner.container_summaries|length }}</span></small>
+      </span>
+      <span class="owner-summary-actions">
+        {% if owner.extension_count %}<span class="badge warning">需延长 {{ owner.extension_count }} 个柜</span>{% endif %}
+        {% if owner.extension_invoice_count %}<span class="badge success">延期账单 {{ owner.extension_invoice_count }} 份</span>{% endif %}
+        {% if owner.payment_proofs %}<span class="badge success">付款截图 {{ owner.payment_proofs|length }} 张</span>{% else %}<span class="badge">未上传付款截图</span>{% endif %}
+        {% if owner.is_cosco %}{% if owner.draft %}<span class="badge success">索账草稿已保存</span>{% else %}<span class="badge warning">待索要账单</span>{% endif %}{% else %}<span class="badge success">无需索要账单</span>{% endif %}
+        <span class="toggle-label"></span>
+      </span>
+    </summary>
+    <div class="owner-card-content">
+    <dl class="owner-stats">
+      <div><dt>账单</dt><dd>{{ owner.invoices|length }}</dd></div>
+      <div><dt>集装箱</dt><dd>{{ owner.containers|length }}</dd></div>
+      <div><dt>Release</dt><dd class="released-count">{{ owner.released_count }}/{{ owner.container_summaries|length }}</dd></div>
+      <div><dt>合计</dt><dd>{% for total in owner.totals %}{{ total.currency }} {{ total.amount }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</dd></div>
+    </dl>
+    <section class="free-day-section">
+      <div class="section-heading">
+        <div><h3>Last Free Day / 提柜计划</h3><small>可一键设置本船东的所有集装箱，也可以在下表逐个修改；延期天数按“计划提柜日期 − Last Free Day”自动计算。</small></div>
+        <span>{% if owner.extension_count %}<strong>{{ owner.extension_count }}</strong> 个柜需要延期{% else %}目前无柜需要延期{% endif %}</span>
+      </div>
+      <form class="free-day-bulk" method="post" action="{{ url_for('update_container_free_days') }}">
+        <input type="hidden" name="vessel" value="{{ vessel }}"><input type="hidden" name="owner" value="{{ owner.owner_name }}"><input type="hidden" name="scope" value="owner">
+        <label><span>统一 Last Free Day</span><input type="date" name="last_free_day" value="{{ owner.bulk_last_free_day }}"></label>
+        <label><span>统一计划提柜日期</span><input type="date" name="pickup_date" value="{{ owner.bulk_pickup_date }}"></label>
+        <button class="button secondary" type="submit">一键应用到本船东所有集装箱</button>
+      </form>
+    </section>
+    <p class="table-help">点击集装箱号可直接修改这份账单；同一柜有多份账单时，也可以点击下面的账单号分别修改。</p>
+    <div class="table-wrap container-breakdown"><table>
+      <thead><tr><th>集装箱号</th><th>B/L No.</th><th>集装箱尺寸</th><th>账单</th><th>该箱总金额</th><th>Last Free Day</th><th>计划提柜</th><th>延期</th><th>Release 状态</th></tr></thead>
+      <tbody>{% for container in owner.container_summaries %}<tr>
+        <td><a class="container-edit-link" href="{{ url_for('edit_invoice', invoice_id=container.invoices[0].id) }}" title="点击修改这份账单">{{ container.container_no }}</a></td>
+        <td>{{ container.bl_nos|join(', ') or '—' }}</td>
+        <td>{{ container.sizes|join(', ') or '—' }}</td>
+        <td><span class="badge {% if container.invoices|length > 1 %}warning{% endif %}">{{ container.invoices|length }} 份账单</span><br><small>{% for invoice in container.invoices %}<a class="invoice-edit-link" href="{{ url_for('edit_invoice', invoice_id=invoice.id) }}">{{ invoice.invoice_no or '未填写账单号' }}</a>{% if invoice.invoice_category == 'last_free_day_extension' %} <span class="badge extension-badge">延期</span>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</small></td>
+        <td class="nowrap"><strong>{% for total in container.totals %}{{ total.currency }} {{ total.amount }}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</strong></td>
+        <td><input class="compact-date" type="date" name="last_free_day" value="{{ container.last_free_day }}" form="free-day-form-{{ container.invoices[0].id }}" aria-label="{{ container.container_no }} Last Free Day"></td>
+        <td><input class="compact-date" type="date" name="pickup_date" value="{{ container.pickup_date }}" form="free-day-form-{{ container.invoices[0].id }}" aria-label="{{ container.container_no }} 计划提柜日期"></td>
+        <td class="free-day-status">
+          {% if container.needs_extension %}<span class="badge warning">延长 {{ container.extension_days }} 天</span>{% elif container.last_free_day and container.pickup_date %}<span class="badge success">无需延长</span>{% else %}<span class="badge">待设置</span>{% endif %}
+          <form id="free-day-form-{{ container.invoices[0].id }}" method="post" action="{{ url_for('update_container_free_days') }}">
+            <input type="hidden" name="vessel" value="{{ vessel }}"><input type="hidden" name="owner" value="{{ owner.owner_name }}"><input type="hidden" name="scope" value="container"><input type="hidden" name="container" value="{{ container.container_no }}">
+            <button class="link-button" type="submit">保存</button>
+          </form>
+        </td>
+        <td>
+          <label class="release-toggle{% if container.released %} released{% endif %}">
+            <input type="checkbox" data-vessel="{{ vessel }}" data-owner="{{ owner.owner_name }}" data-container="{{ container.container_no }}" onchange="saveReleaseStatus(this)" {% if container.released %}checked{% endif %}>
+            <span>{% if container.released %}已 Release{% else %}未 Release{% endif %}</span>
+          </label>
+        </td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+
+    <div class="extension-actions">
+      {% if owner.extension_count %}<a class="button" href="{{ url_for('free_day_extension_draft', vessel=vessel, owner=owner.owner_name, email=owner.owner_email) }}">{% if owner.extension_draft %}编辑延期邮件{% else %}生成延期邮件{% endif %}（{{ owner.extension_count }} 个柜）</a>{% else %}<span class="muted">设置日期后，系统会在这里开放延期邮件。</span>{% endif %}
+    </div>
+
+    <section class="extension-invoice-section">
+      <div class="section-heading"><div><h3>导入延长免租期账单</h3><small>船东返回延期账单后在这里导入。系统会重新提取内容并让你人工审核；保存后自动计入本船东付款合计。</small></div><span>{% if owner.extension_invoice_count %}已导入 {{ owner.extension_invoice_count }} 份{% else %}尚未导入{% endif %}</span></div>
+      <form class="extension-invoice-upload" method="post" action="{{ url_for('upload_extension_invoice') }}" enctype="multipart/form-data">
+        <input type="hidden" name="vessel" value="{{ vessel }}"><input type="hidden" name="owner" value="{{ owner.owner_name }}"><input type="hidden" name="email" value="{{ owner.owner_email }}">
+        <label><span>对应集装箱（可选）</span><select name="container_hint"><option value="">由 PDF 自动识别</option>{% for container in owner.container_summaries %}<option value="{{ container.container_no }}">{{ container.container_no }}</option>{% endfor %}</select></label>
+        <label><span>延期账单 PDF（可多选）</span><input type="file" name="extension_pdfs" accept="application/pdf,.pdf" multiple required></label>
+        <button class="button secondary" type="submit">导入并重新审核</button>
+      </form>
+    </section>
+
+    <section class="payment-proof-section">
+      <div class="section-heading"><div><h3>付款截图</h3><small>可选凭证，按当前船东保存；可上传或直接粘贴一张或多张图片</small></div><span>{% if owner.payment_proofs %}已保存 {{ owner.payment_proofs|length }} 张{% else %}尚未上传{% endif %}</span></div>
+      {% if owner.payment_proofs %}<div class="proof-grid">{% for proof in owner.payment_proofs %}<article class="proof-item">
+        <a target="_blank" href="{{ url_for('payment_proof_file', proof_id=proof.id) }}"><img src="{{ url_for('payment_proof_file', proof_id=proof.id) }}" alt="付款截图 {{ loop.index }}"></a>
+        <div><strong>{{ proof.payment_date or '未填写付款日期' }}</strong><small title="{{ proof.source_filename }}">{{ proof.source_filename }}</small>
+        <form method="post" action="{{ url_for('delete_payment_proof', proof_id=proof.id) }}"><button class="delete-proof" type="submit">移除</button></form></div>
+      </article>{% endfor %}</div>{% endif %}
+      <form class="proof-upload" method="post" action="{{ url_for('upload_payment_proof') }}" enctype="multipart/form-data">
+        <input type="hidden" name="vessel" value="{{ vessel }}"><input type="hidden" name="owner" value="{{ owner.owner_name }}">
+        <label><span>付款日期</span><input type="date" name="payment_date" value="{{ owner.payment_proofs[0].payment_date if owner.payment_proofs else today_iso }}"></label>
+        <div class="proof-file-controls">
+          <label class="proof-file-input"><span>付款截图（可多选）</span><input id="proof-files-{{ loop.index }}" type="file" name="proof_files" accept="image/png,image/jpeg,image/webp,image/gif" multiple required></label>
+          <div class="paste-zone" tabindex="0" data-input-id="proof-files-{{ loop.index }}">
+            <strong>点击这里，再按 Ctrl+V 粘贴截图</strong>
+            <small>也可以使用上面的文件选择；支持多张图片</small>
+            <span class="paste-count">尚未选择图片</span>
+          </div>
+        </div>
+        <button class="button secondary" type="submit">上传付款截图</button>
+      </form>
+    </section>
+
+    {% if owner.is_cosco %}<div class="form-actions workflow-actions">
+      <a class="button secondary" href="{{ url_for('group_email_draft', vessel=vessel, owner=owner.owner_name, email=owner.owner_email) }}">1. {% if owner.draft %}编辑索要账单邮件{% else %}生成索要账单邮件{% endif %}</a>
+      <a class="button" href="{{ url_for('cosco_release_draft', vessel=vessel, owner=owner.owner_name, email=owner.owner_email) }}">2. {% if owner.release_draft %}编辑付款后 Release 邮件{% else %}生成付款后 Release 邮件{% endif %}</a>
+    </div>{% endif %}
+    </div>
+  </details>
+{% else %}<div class="card empty">暂无可汇总的船东。</div>{% endfor %}
+</div>
+
+<script>
+async function saveReleaseStatus(input) {
+  const label = input.closest('.release-toggle');
+  input.disabled = true;
+  const data = new FormData();
+  data.append('vessel', input.dataset.vessel);
+  data.append('owner', input.dataset.owner);
+  data.append('container', input.dataset.container);
+  data.append('released', input.checked ? '1' : '0');
+  try {
+    const response = await fetch('{{ url_for("update_container_release") }}', {method: 'POST', body: data});
+    if (!response.ok) throw new Error('保存失败');
+    const result = await response.json();
+    input.checked = result.released;
+    label.classList.toggle('released', result.released);
+    label.querySelector('span').textContent = result.released ? '已 Release' : '未 Release';
+    const card = input.closest('.owner-card');
+    const releasedCount = card.querySelectorAll('.release-toggle input:checked').length;
+    const totalCount = card.querySelectorAll('.release-toggle input').length;
+    card.querySelector('.released-count').textContent = `${releasedCount}/${totalCount}`;
+    card.querySelector('.owner-release-summary').textContent = `· Release ${releasedCount}/${totalCount}`;
+  } catch (_error) {
+    input.checked = !input.checked;
+    alert('Release 状态保存失败，请重试。');
+  } finally {
+    input.disabled = false;
+  }
+}
+
+function updatePasteCount(input) {
+  const zone = document.querySelector(`.paste-zone[data-input-id="${input.id}"]`);
+  if (!zone) return;
+  const count = input.files.length;
+  zone.querySelector('.paste-count').textContent = count ? `已选择 ${count} 张图片` : '尚未选择图片';
+  zone.classList.toggle('has-files', count > 0);
+}
+
+function addClipboardImages(input, clipboardData) {
+  const images = Array.from(clipboardData.items || [])
+    .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+    .map(item => item.getAsFile())
+    .filter(Boolean);
+  if (!images.length) return false;
+  const transfer = new DataTransfer();
+  Array.from(input.files).forEach(file => transfer.items.add(file));
+  images.forEach((file, index) => {
+    const extension = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    const name = file.name && file.name !== 'image.png'
+      ? file.name
+      : `clipboard-${Date.now()}-${index + 1}.${extension}`;
+    transfer.items.add(new File([file], name, {type: file.type, lastModified: Date.now()}));
+  });
+  input.files = transfer.files;
+  updatePasteCount(input);
+  return true;
+}
+
+document.querySelectorAll('.proof-file-input input').forEach(input => {
+  input.addEventListener('change', () => updatePasteCount(input));
+});
+document.querySelectorAll('.paste-zone').forEach(zone => {
+  zone.addEventListener('click', () => zone.focus());
+  zone.addEventListener('paste', event => {
+    const input = document.getElementById(zone.dataset.inputId);
+    if (addClipboardImages(input, event.clipboardData)) event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

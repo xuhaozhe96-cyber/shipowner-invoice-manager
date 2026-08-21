@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}历史记录 · Shipowner Invoice Manager{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">VESSEL HISTORY</p><h1>已结束的船舶</h1><p>可以点击船名查看原有汇总，也可以恢复到当前船舶列表。</p></div>
+  <a class="button secondary" href="{{ url_for('dashboard') }}">返回当前船舶</a>
+</div>
+<section class="card">
+  <div class="section-heading"><h2>历史记录</h2><span>{{ groups|length }} 条船</span></div>
+  {% if groups %}<div class="table-wrap"><table class="vessel-table">
+    <thead><tr><th>ETA</th><th>船舶 / 航次</th><th>船东</th><th>集装箱号（按船东）</th><th>账单</th><th>COSCO 索账邮件</th><th>结束时间</th><th></th></tr></thead>
+    <tbody>{% for group in groups %}<tr>
+      <td class="nowrap"><strong>{{ group.eta or '未设置' }}</strong></td>
+      <td><a class="vessel-link" href="{{ url_for('invoice_group', vessel=group.vessel_name) }}">{{ group.vessel_name }}</a></td>
+      <td>{{ group.owner_count }}</td>
+      <td class="container-summary">{% for owner_group in group.container_groups %}<div><strong>{{ owner_group.owner_name }}：</strong>{{ owner_group.containers|join(', ') }}</div>{% else %}—{% endfor %}</td>
+      <td>{{ group.invoice_count }}</td><td>{% if group.request_owner_count %}{{ group.draft_count }}/{{ group.request_owner_count }}{% else %}<span class="muted">无需索要</span>{% endif %}</td>
+      <td class="nowrap">{{ group.archived_at[:10] if group.archived_at else '—' }}</td>
+      <td><form class="inline-form" method="post" action="{{ url_for('restore_group') }}"><input type="hidden" name="vessel" value="{{ group.vessel_name }}"><button class="button small" type="submit">恢复</button></form></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>{% else %}<div class="empty"><h3>还没有历史记录</h3><p>在当前船舶列表点击“结束”后，记录会移动到这里。</p></div>{% endif %}
+</section>
+{% endblock %}
