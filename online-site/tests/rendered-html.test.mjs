@@ -23,5 +23,8 @@ test("build contains the invoice manager pages and APIs", async () => {
   assert.match(javascript, /Shipowner Invoice Manager/);
   assert.match(javascript, /Releases@coscoshipping\.co\.uk/);
   assert.match(javascript, /Could you please also help extend the below container/);
+  assert.match(javascript, /待 Release/);
+  assert.match(javascript, /COSCO 草稿待保存/);
+  assert.match(javascript, /需延长/);
   assert.doesNotMatch(javascript, /External Email\. Please do not open suspicious links/);
 });
