@@ -10,7 +10,7 @@ export default async function EditInvoicePage({ params, searchParams }: { params
   if (!invoice) return <main><div className="card empty">没有找到这份账单。<br /><a href="/">返回首页</a></div></main>;
   return (
     <main>
-      <div className="pageHeading"><div><p className="eyebrow">STEP 2</p><h1>核对识别结果</h1><p>{invoice.source_filename} · 所有字段均可修改</p></div><a className="button secondary" target="_blank" href={`/invoice/${invoice.id}/file`}>查看原始 PDF</a></div>
+      <div className="pageHeading"><div><p className="eyebrow">STEP 2</p><h1>核对识别结果</h1><p>{invoice.source_filename} · 所有字段均可修改</p></div></div>
       {query.duplicate === "1" && <div className="notice">相同账单号已经存在，因此没有重复录入。</div>}
       {Number(query.uploaded || 0) > 0 && <div className="notice">已导入 {String(query.uploaded)} 份账单，请先核对这一份。</div>}
       {invoice.invoice_category === "last_free_day_extension" && <div className="notice warning"><strong>延长免租期账单 · 请重新审核</strong><br />请重点核对账单号、集装箱号、金额和费用明细；保存后会计入船东付款合计。</div>}
@@ -36,7 +36,13 @@ export default async function EditInvoicePage({ params, searchParams }: { params
           </div>
           <div className="formActions"><button className="secondary" name="next" value="save">保存账单</button><button name="next" value="group">保存并进入船舶汇总</button></div>
         </form>
-        <aside className="card rawText"><div className="sectionTitle"><h2>PDF 提取文本</h2></div><pre>{invoice.raw_text || "没有可显示的文本。请参考原始 PDF 手工填写。"}</pre></aside>
+        <aside className="card rawText">
+          <div className="sectionTitle"><h2>原始 PDF</h2><a href={`/invoice/${invoice.id}/file`} target="_blank" className="button secondary" style={{fontSize:"13px",padding:"6px 12px"}}>新窗口打开</a></div>
+          <iframe src={`/invoice/${invoice.id}/file`} className="pdfFrame" title="PDF 预览" />
+          {invoice.raw_text
+            ? <><div className="sectionTitle" style={{marginTop:"8px"}}><h2>提取文本</h2></div><pre>{invoice.raw_text}</pre></>
+            : <p className="muted" style={{marginTop:"10px"}}>扫描件无可提取文字，请对照上方 PDF 手工填写。</p>}
+        </aside>
       </div>
     </main>
   );
