@@ -1,0 +1,19 @@
+name = "shipowner-invoice-manager"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+main = "dist/server/index.js"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# ─── 在 Cloudflare 控制台创建 D1 数据库后，把 database_id 填到这里 ───
+[[d1_databases]]
+binding = "DB"
+database_name = "shipowner-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# ─── R2 存储桶（文件名与你创建时一致即可）───
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "shipowner-files"
